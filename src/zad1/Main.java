@@ -21,7 +21,7 @@ public class Main {
       for (String od : odlist) System.out.println(od);
     }
     // --- część bazodanowa
-    String url = "jdbc:mysql://localhost:3306/test";
+    String url = "jdbc:mysql://localhost:3306/test?sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false";
     Database db = new Database(url, travelData);
     db.create();
     db.showGui();

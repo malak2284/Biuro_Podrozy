@@ -38,7 +38,6 @@ public class TravelData {
 
 
 
-
                         String departureDate = sdf.format(new SimpleDateFormat("yyyy-MM-dd").parse(parts[2]));
                         String returnDate = sdf.format(new SimpleDateFormat("yyyy-MM-dd").parse(parts[3]));
                         String price = parts[5];

@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 class Database {
@@ -22,46 +24,76 @@ class Database {
 
             try (Connection con = DriverManager.getConnection(url, username, password)) {
 
-//                Statement stmt= con.createStatement();
-//                String sql1 = "CREATE TABLE offers (id INT AUTO_INCREMENT," +
-//                        "country VARCHAR(255)," +
-//                        "departure_date DATE,"+
-//                        "return_date DATE,"+
-//                        "place VARCHAR(255),"+
-//                        "price INT,"+
-//                        "currency VARCHAR(255),"+
-//                        "PRIMARY KEY(id))";
-//                stmt.executeUpdate(sql1);
+                                Statement stmt= con.createStatement();
+                String sql1 = "CREATE TABLE offers (id INT AUTO_INCREMENT," +
+                        "country VARCHAR(255)," +
+                        "departure_date DATE,"+
+                        "return_date DATE,"+
+                        "place VARCHAR(255),"+
+                        "price INT,"+
+                        "currency VARCHAR(255),"+
+                        "PRIMARY KEY(id))";
+                stmt.executeUpdate(sql1);
 
                 List<String> offersList = travelData.getOffersDescriptionsList("pl_PL", "yyyy-MM-dd");
 
                 for (String offer : offersList) {
-                    System.out.println(offer);
-                    String[] parts = offer.split(" ");
+
+                    String[] parts = offer.split("\\s+");
+
+                    // Sprawdzamy, czy tablica ma więcej elementów niż oczekiwano
+                    if (parts.length > 6) {
+                        // Łączymy części oferty, aby uzyskać poprawną nazwę kraju
+                        parts[0] = parts[0] + " " + parts[1];
+
+                        // Przesuwamy pozostałe części oferty
+                        for (int i = 1; i < parts.length - 1; i++) {
+                            parts[i] = parts[i + 1];
+                        }
+                    }
+
+                    String country = parts[0];
+                    String departureDate = parts[1];
+                    String returnDate = parts[2];
+                    String place = parts[3];
+                    float price = Float.parseFloat(parts[4].replace(",", ".").replace(".", ""));
+                    String language = parts[5];
+
+
+                    java.sql.Date departure_date = null;
+                    java.sql.Date return_date = null;
+
+                    try {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                        departure_date = new java.sql.Date(dateFormat.parse(departureDate).getTime());
+                        return_date = new java.sql.Date(dateFormat.parse(returnDate).getTime());
+
+                    } catch (ParseException e) {
+                        System.err.println("Błąd parsowania daty: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+
                     String sql = "INSERT INTO offers (country, departure_date, return_date, place, price, currency) VALUES (?, ?, ?, ?, ?, ?)";
 
-                    System.out.println(parts[3]);
-                    java.sql.Date departure_date = java.sql.Date.valueOf(parts[2]);
-                    java.sql.Date return_date = java.sql.Date.valueOf(parts[3]);
-
-                    int price = Integer.parseInt(parts[5]);
-
                     PreparedStatement pstmt = con.prepareStatement(sql);
-                        pstmt.setString(1, parts[1]);
-                        pstmt.setDate(2, departure_date);
-                        pstmt.setDate(3, return_date);
-                        pstmt.setString(4, parts[4]);
-                        pstmt.setInt(5, price);
-                        pstmt.setString(6, parts[6]);
+                    pstmt.setString(1, country);
+                    pstmt.setDate(2, departure_date);
+                    pstmt.setDate(3, return_date);
+                    pstmt.setString(4, place);
+                    pstmt.setFloat(5, price);
+                    pstmt.setString(6, language);
 
-                        pstmt.executeUpdate();
-
+                    pstmt.executeUpdate();
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+
+
+
 
 
 
@@ -88,7 +120,18 @@ class Database {
             model.addColumn("Currency");
 
             for (String offer : offersList) {
-                String[] parts = offer.split(" ");
+                String[] parts = offer.split("\\s+");
+
+                // Sprawdzamy, czy tablica ma więcej elementów niż oczekiwano
+                if (parts.length > 6) {
+                    // Łączymy części oferty, aby uzyskać poprawną nazwę kraju
+                    parts[0] = parts[0] + " " + parts[1];
+
+                    // Przesuwamy pozostałe części oferty
+                    for (int i = 1; i < parts.length - 1; i++) {
+                        parts[i] = parts[i + 1];
+                    }
+                }
                 model.addRow(new Object[]{parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]});
             }
 
